@@ -11,11 +11,16 @@ import streamlit as st
 import pickle
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
 
 # Load model
 model = pickle.load(open("QualCheck.pkl", "rb"))
-scaler = StandardScaler()
+
+def manual_standard_scaler(data, mean, std):
+    return (data - mean) / std
+
+# Mean and std values for each feature (precomputed from training data)
+feature_means = np.array([8.3, 0.53, 0.27, 2.54, 0.09, 15.87, 46.47, 0.9967, 3.31, 0.66, 10.42])
+feature_stds = np.array([1.74, 0.18, 0.19, 1.41, 0.04, 10.46, 32.90, 0.0019, 0.15, 0.17, 1.07])
 
 # Streamlit UI
 st.title("Wine Quality Prediction")
@@ -41,16 +46,13 @@ if st.button("Predict Quality"):
         features = np.array([[fixed_acidity, volatile_acidity, citric_acid, residual_sugar,
                               chlorides, free_sulfur_dioxide, total_sulfur_dioxide, density,
                               pH, sulphates, alcohol]])
-        df = pd.DataFrame(features, columns=['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar',
-                                             'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
-                                             'pH', 'sulphates', 'alcohol'])
-
-        # Scale input data
-        df[df.columns] = scaler.fit_transform(df[df.columns])
-
+        
+        # Scale input data manually
+        scaled_features = manual_standard_scaler(features, feature_means, feature_stds)
+        
         # Make prediction
-        prediction = model.predict(df)
-
+        prediction = model.predict(scaled_features)
+        
         # Display result
         st.success(f"Predicted Wine Quality: {int(prediction[0])}")
     except Exception as e:
